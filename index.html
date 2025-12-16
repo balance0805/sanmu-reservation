@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="zh-TW" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SANMU線上訂位</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans TC', sans-serif; box-sizing: border-box; }
+    
+    /* 按鈕互動效果 */
+    .time-slot-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .time-slot-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .time-slot-btn:active:not(:disabled) { transform: translateY(0); }
+    .time-slot-btn:disabled { opacity: 0.6; cursor: not-allowed; background-color: #F3F4F6 !important; color: #9CA3AF !important; border: 1px solid #E5E7EB; }
+    
+    .date-card { transition: all 0.2s ease; border: 1px solid transparent; }
+    .date-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-color: #D4B5A0; }
+    
+    /* 輸入框樣式 */
+    .form-input { 
+      width: 100%; 
+      padding: 12px 16px; 
+      border-radius: 12px; 
+      border: 1px solid #E5E7EB; 
+      background-color: #FAFAFA;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: #D4B5A0;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(212, 181, 160, 0.2);
+    }
+
+    /* 載入動畫 */
+    .loader { border: 2px solid #f3f3f3; border-radius: 50%; border-top: 2px solid #D4B5A0; width: 16px; height: 16px; -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* 淡入動畫 */
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+ </head>
+ <body class="h-full bg-[#FAF8F5] text-[#5D5449]">
+  
+  <div class="min-h-screen flex items-center justify-center p-0 md:p-6">
+    <div class="w-full max-w-md bg-white md:rounded-[2rem] md:shadow-2xl h-full md:h-[850px] overflow-hidden relative flex flex-col">
+      
+      <!-- 頂部 (裝飾用) -->
+      <div class="hidden md:flex justify-between items-center px-6 py-3 bg-white text-xs font-medium text-gray-400 border-b border-gray-50">
+        <span>SANMU RESERVATION</span>
+      </div>
+
+      <!-- 主要內容區 -->
+      <div id="app" class="flex-1 overflow-y-auto custom-scrollbar"></div>
+      
+      <!-- 底部版權與連結 -->
+      <div class="py-4 text-center bg-gray-50 border-t border-gray-100">
+        <div class="flex justify-center gap-4 mb-2 text-sm font-medium text-[#5D5449]">
+            <a href="https://line.me/R/ti/p/@645yivpf" target="_blank" class="hover:text-[#D4B5A0] transition-colors flex items-center gap-1 group">
+                <svg class="w-4 h-4 group-hover:text-[#06C755] transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 5.56 2 9.952c0 2.454 1.393 4.664 3.593 6.096-.164.577-.587 2.115-.672 2.443-.092.356-.046.689.256.776.19.055.435.018 1.83-1.222 1.383-1.228 1.705-1.396 2.05-1.33 1.018.258 2.052.395 3.107.395 5.52 0 10-3.56 10-7.952C22 5.56 17.52 2 12 2zm1.614 10.82c-.172 0-.336-.013-.505-.026-1.55-.118-2.617-2.327-2.827-2.793-.412.92-1.742 2.766-3.235 2.818-.088.003-.177.003-.266.003-.896 0-1.666-.37-2.17-1.042-.14-.188-.046-.462.18-.53.228-.068.468.048.563.267.316.73 1.037.94 1.58.94.048 0 .096 0 .144-.002 1.258-.043 2.185-1.764 2.502-2.457l-1.075-2.203c-.1-.205.006-.45.23-.51.222-.06.448.046.547.25l1.04 2.13c.277-.57.882-1.87 2.096-1.928.064-.004.128-.004.19-.004.796 0 1.565.31 2.04.873.155.183.072.46-.153.537-.225.076-.47-.033-.574-.246-.3-.615-.907-.8-1.39-.8-.035 0-.07 0-.105.003-.984.047-1.53 1.255-1.896 2.066.425.86 1.192 1.956 2.373 2.046.085.006.17.01.254.01.763 0 1.45-.33 1.934-.928.146-.18.39-.2.576-.046.185.153.208.428.056.616-.62.766-1.53 1.196-2.528 1.196z"/></svg>
+                <span>LINE</span>
+            </a>
+            <span class="text-gray-300">|</span>
+            <a href="https://www.instagram.com/sanmu_dw57/#" target="_blank" class="hover:text-[#D4B5A0] transition-colors flex items-center gap-1 group">
+                <svg class="w-4 h-4 group-hover:text-[#E1306C] transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                <span>Instagram</span>
+            </a>
+        </div>
+        <div class="text-xs text-gray-400">
+            Powered by Booking System
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 系統設定
+    // ==========================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxkh4c29azd4fUk9qM_Ohjhqs7xdm2uAbaSx8RVXHLJdwxAgglMNtdr5j3rSSUAyaeQ/exec';
+
+    const months = ['2026/01', '2026/02', '2026/03', '2026/04', '2026/05', '2026/06', 
+                    '2026/07', '2026/08', '2026/09', '2026/10', '2026/11', '2026/12'];
+    const timeSlots = ['14:00', '16:00', '18:00', '20:00'];
+
+    // 狀態變數
+    let currentView = 'months';
+    let selectedMonth = null;
+    let selectedDate = null;
+    let selectedTime = null;
+    let selectedGuests = null;
+    let isLoading = false;
+    let bookedSlots = []; 
+    
+    let formData = {
+        name: '',
+        phone: '',
+        email: '',
+        note: ''
+    };
+
+    // ==========================================
+    // API 連線邏輯
+    // ==========================================
+
+    // 1. 查詢庫存 (GET)
+    async function checkAvailability(dateStr) {
+        isLoading = true;
+        render();
+
+        try {
+            // 使用隨機數防止瀏覽器快取
+            const fetchUrl = `${API_URL}?action=check&date=${dateStr}&_=${Math.random()}`;
+            const response = await fetch(fetchUrl);
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const rawData = data.booked || [];
+                
+                // 強力正規化：只保留數字和冒號，格式化為 "14:00_4"
+                bookedSlots = rawData.map(item => {
+                    const parts = item.split('_');
+                    if(parts.length < 2) return item.trim();
+                    
+                    // 時間部分：抓出 HH:mm (不管是不是長格式)
+                    let t = parts[0].trim();
+                    if(t.includes("T")) {
+                         const match = t.match(/T(\d{2}:\d{2})/);
+                         if(match) t = match[1];
+                    } else if (t.length > 5) {
+                         t = t.substring(0, 5);
+                    }
+
+                    // 人數部分：轉成字串並去除空白
+                    const g = parts[1].trim();
+                    
+                    return `${t}_${g}`;
+                });
+            }
+        } catch (error) {
+            console.error("連線錯誤:", error);
+            showToast("連線不穩定，請檢查網路", "error");
+            bookedSlots = [];
+        } finally {
+            isLoading = false;
+            render();
+        }
+    }
+
+    // 2. 送出預約 (POST)
+    async function submitBooking() {
+        if (!formData.name || !formData.phone) {
+            showToast("請填寫姓名與電話", "error");
+            return;
+        }
+
+        const btn = document.getElementById('submit-btn');
+        if(btn) {
+            btn.innerHTML = '<div class="loader"></div> 處理中...';
+            btn.disabled = true;
+        }
+
+        const payload = {
+            date: selectedDate,
+            time: selectedTime,
+            guests: selectedGuests,
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email,
+            note: formData.note
+        };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                showToast(`預約成功！\n訂單編號: ${result.bookingId}\n請查看您的 Email 收件匣。`, 'success');
+                setTimeout(() => { resetSystem(); }, 3000);
+            } else {
+                showToast(result.message || '預約失敗', 'error');
+                if(btn) {
+                    btn.innerHTML = '確認預約';
+                    btn.disabled = false;
+                }
+            }
+
+        } catch (error) {
+            console.error(error);
+            showToast('連線異常，請重新整理頁面檢查是否預約成功', 'error');
+            if(btn) {
+                btn.innerHTML = '確認預約';
+                btn.disabled = false;
+            }
+        }
+    }
+
+    function resetSystem() {
+        currentView = 'months';
+        selectedMonth = null;
+        selectedDate = null;
+        selectedTime = null;
+        selectedGuests = null;
+        bookedSlots = [];
+        formData = { name: '', phone: '', email: '', note: '' };
+        render();
+    }
+
+    // 檢查時段狀態 - 寬鬆比對
+    function isSlotFull(time, guests) {
+        // time 例如 "14:00"
+        // guests 例如 4
+        const hour = time.split(':')[0]; 
+        
+        // 只要字串裡包含 "14" (小時) 和 "4" (人數)，就視為鎖定
+        return bookedSlots.some(slot => {
+            const hasHour = slot.includes(hour);
+            const hasGuests = slot.includes(String(guests));
+            return hasHour && hasGuests;
+        });
+    }
+
+    function isTimeSlotFullyBooked(time) {
+        return isSlotFull(time, 2) && isSlotFull(time, 4);
+    }
+
+    // ==========================================
+    // 畫面渲染 (View)
+    // ==========================================
+
+    function render() {
+      const app = document.getElementById('app');
+      let content = '';
+
+      if (currentView === 'months') {
+        content = `
+          <div class="px-6 py-8 fade-in">
+            <div class="text-center mb-10">
+              <h1 class="text-3xl font-bold mb-3 text-[#5D5449] tracking-wide">SANMU線上訂位</h1>
+              <p class="text-sm text-gray-400">請選擇預計用餐的月份</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              ${months.map(month => {
+                const [y, m] = month.split('/');
+                return `
+                <button onclick="selectMonth('${month}')" class="date-card group relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm text-center">
+                  <div class="absolute inset-0 bg-[#F4EBE4] opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                  <span class="block text-3xl font-bold text-[#D4B5A0] mb-1">${m}</span>
+                  <span class="block text-xs text-gray-400 font-medium tracking-widest uppercase">${y}</span>
+                </button>
+              `}).join('')}
+            </div>
+          </div>
+        `;
+      } 
+      else if (currentView === 'dates') {
+        const [year, month] = selectedMonth.split('/');
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const dates = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+        content = `
+          <div class="px-6 py-6 fade-in min-h-full flex flex-col">
+            <div class="flex items-center mb-8 relative">
+              <button onclick="goBack()" class="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 class="w-full text-center text-xl font-bold text-[#5D5449]">
+                ${month}月 <span class="text-base font-normal text-gray-400">/ ${year}</span>
+              </h2>
+            </div>
+            
+            <div class="grid grid-cols-5 gap-3 mb-8">
+              ${['日','一','二','三','四','五','六'].map(d => 
+                `<div class="text-center text-xs text-[#D4B5A0] font-bold py-2">${d}</div>`
+              ).join('')}
+              
+              <div class="col-span-2"></div> 
+              
+              ${dates.map(date => {
+                const d = date.toString().padStart(2, '0');
+                const fullDate = `${year}/${month}/${d}`;
+                return `
+                <button onclick="selectDate('${fullDate}')" class="date-card aspect-square flex items-center justify-center rounded-xl bg-white shadow-sm text-[#5D5449] font-medium text-lg relative">
+                  ${date}
+                </button>
+              `}).join('')}
+            </div>
+            
+            <p class="text-center text-xs text-gray-300 mt-auto">僅開放 30 天內預約</p>
+          </div>
+        `;
+      } 
+      else if (currentView === 'times') {
+        content = `
+          <div class="px-6 py-6 fade-in">
+            <div class="flex items-center mb-6 relative">
+              <button onclick="goBack()" class="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 class="w-full text-center text-lg font-bold text-[#5D5449]">
+                ${selectedDate}
+              </h2>
+            </div>
+
+            ${isLoading ? `
+              <div class="flex flex-col items-center justify-center py-20 text-gray-400">
+                <div class="loader mb-4" style="width: 30px; height: 30px; border-width: 3px;"></div>
+                <p class="text-sm">查詢空位中...</p>
+              </div>
+            ` : `
+              
+              <div class="mb-2 text-sm font-bold text-[#D4B5A0] tracking-wider uppercase">Dinner Time</div>
+              <div class="space-y-3 mb-8">
+                ${timeSlots.map(time => {
+                  const isFullyBooked = isTimeSlotFullyBooked(time);
+                  const isSelected = selectedTime === time;
+                  
+                  let bgClass = isSelected ? 'bg-[#5D5449] text-white shadow-lg transform -translate-y-1' : 'bg-white text-[#5D5449]';
+                  let statusText = isFullyBooked ? '<span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">已額滿</span>' : (isSelected ? '<span class="text-xs text-[#D4B5A0]">已選擇</span>' : '');
+
+                  return `
+                    <button onclick="selectTime('${time}')" ${isFullyBooked ? 'disabled' : ''} 
+                      class="time-slot-btn w-full p-5 rounded-2xl text-left flex justify-between items-center shadow-sm border border-transparent ${bgClass}">
+                      <span class="text-xl font-medium tracking-tight font-mono">${time}</span>
+                      ${statusText}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+
+              ${selectedTime ? `
+                <div class="fade-in border-t border-gray-100 pt-6">
+                   <div class="mb-4 text-sm font-bold text-[#D4B5A0] tracking-wider uppercase">Select Guests</div>
+                   <div class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
+                     <p class="text-center text-gray-500 mb-6 text-sm">您選擇了 <span class="text-[#5D5449] font-bold">${selectedTime}</span> 的時段</p>
+                     
+                     <div class="flex gap-3">
+                       <button onclick="goToForm(2)" ${isSlotFull(selectedTime, 2) ? 'disabled' : ''} 
+                         class="time-slot-btn flex-1 py-4 rounded-xl font-bold bg-[#D4B5A0] text-white disabled:bg-gray-200">
+                         2人桌 ${isSlotFull(selectedTime, 2) ? '<br><span class="text-xs font-normal opacity-70">(已滿)</span>' : ''}
+                       </button>
+                       
+                       <button onclick="goToForm(4)" ${isSlotFull(selectedTime, 4) ? 'disabled' : ''} 
+                         class="time-slot-btn flex-1 py-4 rounded-xl font-bold bg-[#D4B5A0] text-white disabled:bg-gray-200">
+                         4人桌 ${isSlotFull(selectedTime, 4) ? '<br><span class="text-xs font-normal opacity-70">(已滿)</span>' : ''}
+                       </button>
+                     </div>
+                   </div>
+                </div>
+              ` : ''}
+            `}
+          </div>
+        `;
+      }
+
+      // --- 4. 填寫資料 (Form) ---
+      else if (currentView === 'form') {
+        content = `
+          <div class="px-6 py-6 fade-in">
+             <div class="flex items-center mb-6 relative">
+              <button onclick="goBack()" class="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 class="w-full text-center text-lg font-bold text-[#5D5449]">
+                預約資訊
+              </h2>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm mb-6 border border-gray-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-400">日期</span>
+                    <span class="font-medium">${selectedDate}</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-400">時間</span>
+                    <span class="font-medium">${selectedTime}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-400">人數</span>
+                    <span class="font-medium">${selectedGuests} 位</span>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="block text-sm font-medium text-[#5D5449] mb-1">姓名 <span class="text-red-400">*</span></label>
+                    <input type="text" class="form-input" value="${formData.name}" oninput="updateForm('name', this.value)" placeholder="請輸入您的姓名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#5D5449] mb-1">電話 <span class="text-red-400">*</span></label>
+                    <input type="tel" class="form-input" value="${formData.phone}" oninput="updateForm('phone', this.value)" placeholder="09xxxxxxxx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#5D5449] mb-1">Email</label>
+                    <input type="email" class="form-input" value="${formData.email}" oninput="updateForm('email', this.value)" placeholder="接收預約確認信 (選填)">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#5D5449] mb-1">備註</label>
+                    <textarea class="form-input" rows="3" oninput="updateForm('note', this.value)" placeholder="">${formData.note}</textarea>
+                </div>
+            </div>
+
+            <button id="submit-btn" onclick="submitBooking()" class="w-full py-4 rounded-full font-bold bg-[#D4B5A0] text-white shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+                確認預約
+            </button>
+          </div>
+        `;
+      }
+
+      app.innerHTML = content;
+    }
+
+    // ==========================================
+    // 導航與互動
+    // ==========================================
+
+    function updateForm(field, value) {
+        formData[field] = value;
+    }
+
+    function showToast(message, type) {
+      const toast = document.createElement('div');
+      toast.className = `fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 min-w-[300px] fade-in ${
+        type === 'success' ? 'bg-[#5D5449] text-white' : 'bg-red-500 text-white'
+      }`;
+      const icon = type === 'success' ? '✓' : '!';
+      toast.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center font-bold">${icon}</div>
+        <div class="text-sm font-medium whitespace-pre-line">${message}</div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, -20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function selectMonth(month) {
+      selectedMonth = month;
+      currentView = 'dates';
+      render();
+    }
+
+    function selectDate(dateStr) {
+      selectedDate = dateStr;
+      currentView = 'times';
+      selectedTime = null;
+      checkAvailability(dateStr); // 呼叫 API
+    }
+
+    function selectTime(time) {
+      selectedTime = time;
+      render();
+    }
+
+    function goToForm(guests) {
+        selectedGuests = guests;
+        currentView = 'form';
+        render();
+    }
+
+    function goBack() {
+      if (currentView === 'dates') {
+        currentView = 'months';
+        selectedMonth = null;
+      } else if (currentView === 'times') {
+        currentView = 'dates';
+        selectedDate = null;
+        selectedTime = null;
+      } else if (currentView === 'form') {
+        currentView = 'times';
+        selectedGuests = null;
+      }
+      render();
+    }
+
+    // 初始化
+    render();
+  </script>
+ </body>
+</html>
