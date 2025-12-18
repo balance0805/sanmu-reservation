@@ -20,6 +20,22 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Toast 樣式 */
+    .toast {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85); color: white; padding: 20px 24px;
+      border-radius: 12px; font-size: 15px; font-weight: 500;
+      z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      /* 預設靠左，讓多行文字閱讀更整齊 */
+      text-align: left; 
+      line-height: 1.6; max-width: 85%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .toast.show { opacity: 1; }
   </style>
  </head>
  <body class="h-full bg-[#FAF8F5] text-[#5D5449]">
@@ -56,7 +72,6 @@
 
   <script>
     // ★★★ 您的訂位系統 Apps Script 網址 ★★★
-    // 請確認這跟您的 Apps Script 部署網址一致
     const API_URL = 'https://script.google.com/macros/s/AKfycbx8U7yBZBU7urIjdcNmp1gazqNvHBJrZcwHArFDlV9s6IEWGB_IUW63cxGnVhXwSHIW8g/exec';
 
     const months = ['2026/01', '2026/02', '2026/03', '2026/04', '2026/05', '2026/06', 
@@ -118,7 +133,6 @@
     }
 
     async function submitBooking() {
-        // ★★★ 更新：加入 Email 必填檢查 ★★★
         if (!formData.name || !formData.phone || !formData.email) {
             showToast("請填寫姓名、電話與 Email", "error");
             return;
@@ -172,8 +186,8 @@
             let result = JSON.parse(text);
 
             if (result.status === 'success') {
-                showToast(`預約成功！\n訂單編號: ${result.bookingId}`, 'success');
-                setTimeout(() => { resetSystem(); }, 3000);
+                showToast(`預約成功！\n訂單編號: ${result.bookingId}\n請查看您的 Email 收件匣。`, 'success');
+                setTimeout(() => { resetSystem(); }, 4000); 
             } else {
                 showToast(result.message || '預約失敗', 'error');
                 if(btn) { btn.innerHTML = '確認預約'; btn.disabled = false; }
@@ -321,12 +335,12 @@
                      
                      <div class="flex gap-3">
                        <button onclick="goToForm(2)" ${isSlotFull(selectedTime, 2) ? 'disabled' : ''} 
-                         class="time-slot-btn flex-1 py-4 rounded-xl font-bold bg-[#D4B5A0] text-white disabled:bg-gray-200">
+                         class="time-slot-btn flex-1 py-4 rounded-xl font-bold text-white disabled:bg-gray-200 ${isSlotFull(selectedTime, 2) ? '' : 'bg-[#D65A5A] shadow-lg shadow-red-200 hover:bg-[#C04848]'}">
                          2人桌 ${isSlotFull(selectedTime, 2) ? '<br><span class="text-xs font-normal opacity-70">(已滿)</span>' : ''}
                        </button>
                        
                        <button onclick="goToForm(4)" ${isSlotFull(selectedTime, 4) ? 'disabled' : ''} 
-                         class="time-slot-btn flex-1 py-4 rounded-xl font-bold bg-[#D4B5A0] text-white disabled:bg-gray-200">
+                         class="time-slot-btn flex-1 py-4 rounded-xl font-bold text-white disabled:bg-gray-200 ${isSlotFull(selectedTime, 4) ? '' : 'bg-[#D65A5A] shadow-lg shadow-red-200 hover:bg-[#C04848]'}">
                          4人桌 ${isSlotFull(selectedTime, 4) ? '<br><span class="text-xs font-normal opacity-70">(已滿)</span>' : ''}
                        </button>
                      </div>
@@ -376,7 +390,6 @@
                     <label class="block text-sm font-medium text-[#5D5449] mb-1">電話 <span class="text-red-400">*</span></label>
                     <input type="tel" class="form-input" value="${formData.phone}" oninput="updateForm('phone', this.value)" placeholder="09xxxxxxxx">
                 </div>
-                <!-- ★★★ 更新：Email 改為必填 ★★★ -->
                 <div>
                     <label class="block text-sm font-medium text-[#5D5449] mb-1">Email <span class="text-red-400">*</span></label>
                     <input type="email" class="form-input" value="${formData.email}" oninput="updateForm('email', this.value)" placeholder="請輸入 Email (接收預約確認信)">
@@ -387,7 +400,8 @@
                 </div>
             </div>
 
-            <button id="submit-btn" onclick="submitBooking()" class="w-full py-4 rounded-full font-bold bg-[#D4B5A0] text-white shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+            <!-- ★★★ 更新：確認預約按鈕顏色改為紅色 ★★★ -->
+            <button id="submit-btn" onclick="submitBooking()" class="w-full py-4 rounded-full font-bold text-white shadow-lg shadow-red-200 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed bg-[#D65A5A] hover:bg-[#C04848]">
                 確認預約
             </button>
           </div>
@@ -407,20 +421,22 @@
 
     function showToast(message, type) {
       const toast = document.createElement('div');
-      toast.className = `fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 min-w-[300px] fade-in ${
+      toast.className = `fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 min-w-[300px] max-w-[90%] fade-in ${
         type === 'success' ? 'bg-[#5D5449] text-white' : 'bg-red-500 text-white'
       }`;
+      
       const icon = type === 'success' ? '✓' : '!';
+      // ★★★ 更新：強制內文靠左對齊 ★★★
       toast.innerHTML = `
-        <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center font-bold">${icon}</div>
-        <div class="text-sm font-medium whitespace-pre-line">${message}</div>
+        <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center font-bold flex-shrink-0">${icon}</div>
+        <div class="text-sm font-medium whitespace-pre-line text-left flex-1">${message}</div>
       `;
       document.body.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translate(-50%, -20px)';
         setTimeout(() => toast.remove(), 300);
-      }, 3000);
+      }, 4000);
     }
 
     function selectMonth(month) {
